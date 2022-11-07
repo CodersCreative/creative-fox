@@ -1,0 +1,178 @@
+{
+  "name": "Creative Fox",
+  "vendor": "Creative Coders",
+  "appId": "com.creativecoders.creative-fox",
+  "binaryName": "creative-fox",
+  "version": {
+    "product": "firefox-dev",
+    "version": "107.0b9"
+  },
+  "buildOptions": {
+    "windowsUseSymbolicLinks": false
+  },
+  "addons": {
+    "ublock": {
+      "platform": "github",
+      "id": "uBlock0@raymondhill.net",
+      "repo": "gorhill/uBlock",
+      "version": "1.44.4",
+      "fileGlob": "uBlock0_*.firefox.xpi"
+    },
+    "firepicker": {
+      "id": "fire-picker@browser.fushra.com",
+      "platform": "github",
+      "repo": "pulse-browser/fire-picker",
+      "version": "v1.1.2",
+      "fileGlob": "release.zip"
+    },
+    "tree-style-tabs": {
+      "id": "sidebartabs@browser.fushra.com",
+      "platform": "github",
+      "repo": "piroor/treestyletab",
+      "version": "3.8.2",
+      "fileGlob": "treestyletab-we.xpi"
+    },
+    "DuckDuckGo-privacy-essentials": {
+      "platform": "amo",
+      "id": "jid1-ZAdIEUB7XOzOJw@jetpack",
+      "amoId": "850407",
+      "version": "2022.8.25"
+    },
+    "matte-black-white": {
+      "platform": "amo",
+      "id": "{bcf9bb24-1417-4c9e-b901-1ffa328ba873}",
+      "amoId": "850407",
+      "version": "2022.2.23"
+    },
+    "darkreader": {
+        "id": "darkreader@darkreader",
+        "platform": "github",
+        "repo": "darkreader/darkreader",
+        "version": "v4.9.60",
+        "fileGlob": "darkreader-firefox.xpi"
+    },
+    "seo-quake": {
+      "platform": "amo",
+      "id": "{317B5128-0B0B-49b2-B2DB-1E7560E16C74}",
+      "amoId": "850407",
+      "version": "3.9.7"
+    },
+    "enhancer-for-youtube": {
+      "platform": "amo",
+      "id": "enhancerforyoutube@maximerf.addons.mozilla.org",
+      "amoId": "850407",
+      "version": "2.0.117.5"
+    },
+    "stylus": {
+      "platform": "amo",
+      "id": "{7a7a4a92-a2a0-41d1-9fd7-1e92480d612d}",
+      "amoId": "850407",
+      "version": "1.5.26"
+    },
+    "tranquility-reader": {
+      "platform": "amo",
+      "id": "tranquility@ushnisha.com",
+      "amoId": "850407",
+      "version": "3.0.24"
+    },
+    "spell-check": {
+      "platform": "amo",
+      "id": "languagetool-webextension@languagetool.org",
+      "amoId": "850407",
+      "version": "5.8.6"
+    },
+    "sidebar-tabs": {
+      "id": "sidebartabs@browser.fushra.com",
+      "platform": "github",
+      "repo": "pulse-browser/sidebar-tabs",
+      "version": "v0.4.0",
+      "fileGlob": "release.zip"
+    },
+    "imacros-for-firefox": {
+      "platform": "amo",
+      "id": "{81BF1D23-5F17-408D-AC6B-BD6DF7CAF670}",
+      "amoId": "850407",
+      "version": "10.1.0.1485"
+    },
+    "down-them-all": {
+      "platform": "amo",
+      "id": "{DDC359D1-844A-42a7-9AA1-88A850A938A8}",
+      "amoId": "850407",
+      "version": "4.5.2"
+    },
+    "ghostery": {
+      "platform": "amo",
+      "id": "firefox@ghostery.com",
+      "amoId": "850407",
+      "version": "8.7.6"
+    },
+    "dictionary-anywhere": {
+      "platform": "amo",
+      "id": "{e90f5de4-8510-4515-9f67-3b6654e1e8c2}",
+      "amoId": "850407",
+      "version": "1.1.0"
+    },
+    "single-file": {
+      "platform": "amo",
+      "id": "{531906d3-e22f-4a6c-a102-8057b88a1a63}",
+      "amoId": "850407",
+      "version": "1.21.25"
+    },
+    "measure-it": {
+      "platform": "amo",
+      "id": "{79b2e4de-8fb4-4ccc-b9f6-362ac2fb74b2}",
+      "amoId": "850407",
+      "version": "2.2.0"
+    },
+    "sponser-blocker": {
+      "platform": "amo",
+      "id": "sponsorBlocker@ajay.app",
+      "amoId": "850407",
+      "version": "5.1.3"
+    },
+    "privacy-badger": {
+      "platform": "amo",
+      "id": "jid1-MnnxcxisBPnSXQ@jetpack",
+      "amoId": "850407",
+      "version": "2022.9.27"
+    },
+    "decentraleyes": {
+      "platform": "amo",
+      "id": "jid1-BoFifL9Vbdl2zQ@jetpack",
+      "amoId": "850407",
+      "version": "2.0.17"
+    },
+    "bitwarden": {
+      "platform": "amo",
+      "id": "{446900e4-71c2-419f-a6a7-df9c091e268b}",
+      "amoId": "850407",
+      "version": "2022.10.1"
+    }
+  },
+  "brands": {
+    "stable": {
+      "backgroundColor": "#2B2A33",
+      "brandShorterName": "CFox",
+      "brandShortName": "Creative Fox",
+      "brandFullName": "Creative Fox",
+      "release": {
+        "displayVersion": "1.0.0",
+        "github": {
+          "repo": "CodersCreative/creative-fox"
+        },
+        "x86": {
+          "windowsMar": "windows.mar",
+          "macosMar": "macosIntel.mar",
+          "linuxMar": "linux.mar"
+        }
+      }
+    }
+  },
+  "license": {
+    "ignoredFiles": [
+      ".*\\.json"
+    ],
+    "licenseType": "MPL-2.0"
+  },
+  "updateHostname": "updates.pulsebrowser.app"
+}

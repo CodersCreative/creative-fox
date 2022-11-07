@@ -1,0 +1,27 @@
+{
+  "name": "browser",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/fushra/browser.git",
+  "author": "trickypr <trickypr@icloud.com>",
+  "license": "MPL-2.0",
+  "private": true,
+  "dependencies": {
+    "gluon-build": "^1.0.0-rc.2"
+  },
+  "scripts": {
+    "build": "gluon build",
+    "build:ui": "gluon build --ui",
+    "bs": "yarn build && yarn start",
+    "bus": "yarn build:ui && yarn start",
+    "start": "gluon run",
+    "export": "gluon export-file",
+    "imp": "gluon import",
+    "clearProfile": "rm -rf engine/obj-x86_64-pc-linux-gnu/tmp/profile-default",
+    "download": "gluon download",
+    "package": "gluon package",
+    "ff-version": "gluon ff-version",
+    "licenseCheck": "gluon license-check",
+    "gluon": "gluon"
+  }
+}

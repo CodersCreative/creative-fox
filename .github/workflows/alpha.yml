@@ -1,0 +1,421 @@
+name: Alpha builds
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-data:
+    name: Generate build data
+    runs-on: ubuntu-latest
+    outputs:
+      build_date: ${{ steps.data.outputs.builddate }}
+      version: ${{ steps.data.outputs.version }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          token: ${{ secrets.ROBOT_TOKEN }}
+
+      - name: Setup gluon
+        run: |
+          yarn
+          npm i -g gluon-build@next
+
+      - name: Bump version
+        run: |
+          yarn gluon ci --brand alpha --bump prerelease
+
+      - name: Debug
+        run: |
+          gluon get version
+          gluon get version | xargs
+          echo "$(gluon get version | xargs)"
+
+      - name: Export release date
+        id: data
+        shell: bash
+        run: |
+          echo "::set-output name=builddate::$(date +"%Y-%m-%d")"
+          echo "::set-output name=version::$(gluon get version | xargs)"
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: 🔖 Update version to ${{ steps.data.outputs.version }}
+          commit_user_name: Fushra Robot
+          commit_user_email: trickypr@gmail.com
+
+  linux:
+    runs-on: ubuntu-latest
+    needs: [build-data]
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+        # Give the runner some swap space in an attempt to stop gkrust from crashing the build
+      - name: Set Swap Space
+        uses: pierotofy/set-swap-space@v1.0
+        with:
+          swap-size-gb: 6
+
+      - name: Setup git
+        run: |
+          git config --global user.email "trickypr@users.noreply.github.com"
+          git config --global user.name "TrickyPR"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update --fix-missing
+          sudo apt-get update
+          sudo apt-get install dos2unix yasm nasm build-essential libgtk2.0-dev libpython3-dev m4 uuid libasound2-dev libcurl4-openssl-dev libdbus-1-dev libdrm-dev libdbus-glib-1-dev libdbus-glib-1-dev libgtk-3-dev libpulse-dev libx11-xcb-dev libxt-dev xvfb lld-10 llvm
+          pip install pycairo testresources
+
+          echo "/usr/lib/llvm-10/bin" >> $GITHUB_PATH
+
+      - name: Install WASI SDK
+        run: |
+          wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-14/wasi-sdk_14.0_amd64.deb
+          sudo apt install ./wasi-sdk_14.0_amd64.deb
+
+      - name: Install libclang builtins
+        run: |
+          wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-14/libclang_rt.builtins-wasm32-wasi-14.0.tar.gz
+          sudo tar -xf libclang_rt.builtins-wasm32-wasi-14.0.tar.gz --strip-components=1 -C /usr/lib/llvm-10/lib/clang/10.0.0/lib/
+
+      - name: Disable wasm sandboxing for the sake of my sanity
+        run: |
+          echo "ac_add_options --without-wasm-sandboxed-libraries" >> mozconfig
+
+      - name: Free up space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
+      - name: Install sccache
+        env:
+          LINK: https://github.com/mozilla/sccache/releases/download
+          SCCACHE_VERSION: 0.2.13
+        run: |
+          SCCACHE_FILE=sccache-$SCCACHE_VERSION-x86_64-unknown-linux-musl
+          mkdir -p $HOME/.local/bin
+          curl -L "$LINK/$SCCACHE_VERSION/$SCCACHE_FILE.tar.gz" | tar xz
+          mv -f $SCCACHE_FILE/sccache $HOME/.local/bin/sccache
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Save sccache
+        uses: actions/cache@v2
+        continue-on-error: false
+        with:
+          path: /home/runner/.cache/sccache
+          key: ${{ runner.os }}-sccache
+
+      - name: Get System Info
+        run: |
+          llc --version
+          ls /usr/lib/llvm-10/bin
+          wasm-ld --version
+          cargo --version
+          ls /opt/wasi-sdk/share/wasi-sysroot
+
+      - name: Setup gluon
+        run: |
+          yarn
+
+      - name: Load gluon CI setup
+        run: yarn gluon ci --brand alpha --display-version ${{ needs.build-data.outputs.version }}
+
+      - name: Download firefox source and dependencies
+        run: yarn download
+
+      - name: Import
+        run: yarn imp
+
+      - name: Bootstrap
+        run: |
+          cd engine
+          ./mach --no-interactive bootstrap --application-choice browser
+          cd ..
+
+      - name: Build
+        run: yarn build
+
+      - name: Package
+        run: yarn package
+
+      - name: Rename artifacts
+        run: |
+          mv dist/pulse-browser-*.tar.bz2 "pulse-browser.linux.tar.bz2"
+          mv dist/output.mar linux.mar
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: pulse-browser.linux.tar.bz2
+          path: ./pulse-browser.linux.tar.bz2
+
+      - name: Upload mar
+        uses: actions/upload-artifact@v2
+        with:
+          name: linux.mar
+          path: ./linux.mar
+
+      - name: Upload update manifests
+        uses: actions/upload-artifact@v2
+        with:
+          name: linux_update_manifest
+          path: ./dist/update
+
+  mac:
+    runs-on: macos-latest
+    needs: [build-data]
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Setup git
+        run: |
+          git config --global user.email "trickypr@users.noreply.github.com"
+          git config --global user.name "TrickyPR"
+
+      - name: Install system dependencies
+        run: |
+          brew install cairo sccache gnu-tar mercurial
+          pip3 install pycairo testresources
+
+      - name: Force usage fo gnu-tar
+        run: |
+          echo 'export PATH="/usr/local/opt/gnu-tar/libexec/gnubin:$PATH"' >> ~/.bash_profile
+          echo 'export PATH="/usr/local/opt/gnu-tar/libexec/gnubin:$PATH"' >> ~/.zsh
+          source ~/.bash_profile
+
+      # There are bugs in python 3.10 which prevent firefox from building correctly. This should
+      # fix it for the moment until mozilla or Python fix it
+      - name: Hotfix for bug 1766497 & 1786419
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Save sccache
+        uses: actions/cache@v2
+        continue-on-error: false
+        with:
+          path: ~/Library/Caches/Mozilla.sccache
+          key: ${{ runner.os }}-sccache
+
+      - name: Setup gluon
+        run: yarn
+
+      - name: Load gluon CI setup
+        run: yarn gluon ci -- --brand alpha --display-version ${{ needs.build-data.outputs.version }}
+
+      - name: Download firefox source and dependancies
+        run: yarn download
+
+      - name: Import
+        run: yarn imp
+
+      - name: Bootstrap
+        run: |
+          cd engine
+          ./mach --no-interactive bootstrap --application-choice browser
+          cd ..
+
+      - name: Gluon build
+        run: yarn build --verbose
+
+      - name: Package
+        run: yarn gluon package
+
+      - name: Rename artifacts
+        run: |
+          mv ./dist/*.dmg "pulse-browser.macos.dmg"
+          mv ./dist/output.mar macos.mar
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: pulse-browser.macos.dmg
+          path: ./pulse-browser.macos.dmg
+
+      - name: Upload mar
+        uses: actions/upload-artifact@v2
+        with:
+          name: macos.mar
+          path: ./macos.mar
+
+      - name: Upload update manifests
+        uses: actions/upload-artifact@v2
+        with:
+          name: macos_update_manifest
+          path: ./dist/update
+
+  source:
+    runs-on: ubuntu-latest
+    needs: [build-data]
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Setup git
+        run: |
+          git config --global user.email "trickypr@users.noreply.github.com"
+          git config --global user.name "TrickyPR"
+
+      - name: Setup gluon
+        run: yarn
+
+      - name: Load gluon CI setup
+        run: yarn gluon ci -- --brand alpha --display-version ${{ needs.build-data.outputs.version }}
+
+      - name: Download firefox source and dependancies
+        run: yarn download --verbose
+
+      - name: Import
+        run: yarn imp --verbose
+
+      - name: Compress
+        run: |
+          cd engine
+          # -h is used to dereference symlinks
+          tar --use-compress-program=zstd -hcf ../pulse-browser.source.tar.gz *
+          cd ..
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: pulse-browser.source.tar.gz
+          path: ./pulse-browser.source.tar.gz
+
+  windows:
+    runs-on: tricky-win
+    needs: [build-data]
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          yarn
+
+      - name: Load gluon CI setup
+        run: yarn gluon ci -- --brand alpha --display-version ${{ needs.build-data.outputs.version }}
+
+      - name: Download
+        run: yarn download
+
+      - name: Import
+        run: yarn imp
+
+      - name: Build
+        run: yarn build -- --skip-patch-check
+
+      - name: Package
+        run: |
+          yarn package
+          mv ./dist/output.mar windows.mar
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: pulse-browser.installer.exe
+          path: ./dist/pulse-browser.installer.exe
+
+      - name: Upload mar
+        uses: actions/upload-artifact@v2
+        with:
+          name: windows.mar
+          path: ./windows.mar
+
+      - name: Upload update manifests
+        uses: actions/upload-artifact@v2
+        with:
+          name: windows_update_manifest
+          path: ./dist/update
+
+  release:
+    name: Release
+    needs: [build-data, linux, source, mac, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v2
+
+      - name: release-github
+        uses: 'marvinpinto/action-automatic-releases@latest'
+        with:
+          repo_token: '${{ secrets.GITHUB_TOKEN }}'
+          automatic_release_tag: ${{ needs.build-data.outputs.version }}
+          prerelease: true
+          title: 'Alpha build'
+          files: |
+            pulse-browser.linux.tar.bz2
+            pulse-browser.source.tar.gz
+            pulse-browser.macos.dmg
+            pulse-browser.installer.exe
+            windows.mar
+            macos.mar
+            linux.mar
+
+      - name: List
+        run: find .
+
+      - name: Checkout tools repo
+        uses: actions/checkout@v3
+        with:
+          repository: pulse-browser/updates
+          path: updates
+          token: ${{ secrets.ROBOT_TOKEN }}
+
+      - name: Copy update manifests
+        run: |
+          mkdir -p updates/updates
+          cp -a macos_update_manifest/. updates/updates/
+          cp -a linux_update_manifest/. updates/updates/
+          cp -a windows_update_manifest/. updates/updates/
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: 🔖 Upload update manifests ${{ needs.build-data.outputs.version }}
+          commit_user_name: Fushra Robot
+          commit_user_email: trickypr@gmail.com
+          repository: ./updates
+
+  distro-flatpak:
+    name: Build flatpak repos
+    needs: [build-data, release]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: pulse-browser/packages
+          token: ${{ secrets.ROBOT_TOKEN }}
+          submodules: recursive
+
+      - name: Import GPG keys
+        run: |
+          mkdir ~/.gpg
+          echo -n "$GPG_SIGNING_KEY" | base64 --decode | gpg --import --homedir ~/.gpg
+        env:
+          GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+
+      - name: Build flatpak
+        run: |
+          cd flatpak
+          ./build.sh alpha
+
+      - name: Upload flatpak repo
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: 📦 Upload flatpak for ${{ needs.build-data.outputs.version }}
+          commit_user_name: Fushra Robot
+          commit_user_email: trickypr@gmail.com
+          repository: ./repo

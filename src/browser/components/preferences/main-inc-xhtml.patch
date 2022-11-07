@@ -1,0 +1,20 @@
+diff --git a/browser/components/preferences/main.inc.xhtml b/browser/components/preferences/main.inc.xhtml
+index 3d4035690d38f4d851cc86749ebeec7b7ca9aaf2..e9136a52427d7f3ada87803373f16c20a25b066a 100644
+--- a/browser/components/preferences/main.inc.xhtml
++++ b/browser/components/preferences/main.inc.xhtml
+@@ -125,6 +125,15 @@
+   <html:h1 data-l10n-id="language-and-appearance-header"/>
+ </hbox>
+ 
++<!-- Sidebar -->
++<groupbox id="sidebarGroup" data-category="paneGeneral" hidden="true">
++  <label><html:h2 data-l10n-id="preferences-sidebar-header"/></label>
++
++  <checkbox id="sidebarVisible"
++    preference="pulse.sidebar.enabled"
++    data-l10n-id="preferences-sidebar-visible"/>
++</groupbox>
++
+ <!-- Website appearance -->
+ <groupbox id="webAppearanceGroup" data-category="paneGeneral" hidden="true">
+   <html:h2 data-l10n-id="preferences-web-appearance-header"/>
