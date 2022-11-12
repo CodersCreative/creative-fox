@@ -24,19 +24,16 @@ jobs:
 
     - name: Download Yarn
       run: npm install --global yarn
+                        
+    - name: Download Melon
+      run: yarn add melon-build
                   
     - name: Download Lld
       run: sudo apt-get install lld-8
       
     - name: Download Gluon
       run: yarn global add gluon-build@next
-            
-    - name: Delete Firefox
-      run: rm .gluon/engine
-            
-    - name: Delete Engine
-      run: rm engine
-            
+
     - name: Download Files
       run: gluon download
             
