@@ -26,11 +26,17 @@ jobs:
       run: npm install --global yarn
                   
     - name: Download Lld
-      run: apt-get install lld-8
+      run: sudo apt-get install lld-8
       
     - name: Download Gluon
       run: yarn global add gluon-build@next
-      
+            
+    - name: Delete Firefox
+      run: rm .gluon/engine
+            
+    - name: Delete Engine
+      run: rm engine
+            
     - name: Download Files
       run: gluon download
             
